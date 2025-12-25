@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบฟอร์มบันทึกข้อมูลรถยึด</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Sarabun -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            background-color: #f8fafc; /* Slate-50 */
+            color: #334155; /* Slate-700 */
+        }
+        
+        /* Card Design */
+        .form-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: #f1f5f9; /* Slate-100 */
+            padding: 12px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b; /* Slate-800 */
+            margin: 0;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        /* Input Standard */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569; /* Slate-600 */
+            margin-bottom: 6px;
+        }
+        
+        .form-control {
+            width: 100%;
+            height: 42px; /* Fixed height for uniformity */
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1; /* Slate-300 */
+            border-radius: 6px;
+            background-color: #fff;
+            color: #1e293b;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2563eb; /* Blue-600 */
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Readonly / Computed Fields */
+        .form-control-readonly {
+            background-color: #f8fafc;
+            color: #2563eb;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background-color: #f8fafc;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+        }
+
+        /* CSS for Animation */
+        .hidden {
+            display: none !important;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Remove Button Style */
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-size: 12px;
+        }
+        .remove-btn:hover {
+            background-color: #dc2626;
+        }
+    </style>
+</head>
+<body class="py-10 px-4 sm:px-6">
+
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- Page Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+                <div class="bg-blue-700 text-white w-12 h-12 rounded-lg flex items-center justify-center text-xl shadow-lg">
+                    <i class="fa-solid fa-car-side"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">บันทึกข้อมูลรถยึด</h1>
+                    <p class="text-sm text-slate-500">ระบบฐานข้อมูลกลาง (Central Database)</p>
+                </div>
+            </div>
+            <div class="hidden sm:block text-right">
+                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-blue-400">Status: Online</span>
+            </div>
+        </div>
+
+        <form id="carForm">
+            
+            <!-- SECTION 1: Location & Date -->
+            <div class="form-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-map-location-dot text-blue-600"></i>
+                    <h2 class="card-title">1. ข้อมูลสาขาและเขตพื้นที่</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Row 1 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">วันที่ทำรายการ <span class="text-red-500">*</span></label>
+                            <input type="date" name="date" required class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">เขตพื้นที่ (Zone) <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <select name="zone" required class="form-control appearance-none cursor-pointer">
+                                    <option value="" disabled selected>- เลือกเขต -</option>
+                                    <option value="K012">K012</option>
+                                    <option value="K122">K122</option>
+                                    <option value="K189">K189</option>
+                                    <option value="K195">K195</option>
+                                    <option value="K196">K196</option>
+                                    <option value="K247">K247</option>
+                                    <option value="K273">K273</option>
+                                    <option value="K358">K358</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">รหัสสาขา <span class="text-red-500">*</span></label>
+                            <input type="text" name="branchCode" required maxlength="2" placeholder="2 ตัวอักษร/ตัวเลข" class="form-control text-center uppercase" style="text-transform: uppercase;">
+                        </div>
+                    </div>
+                    <!-- Row 2 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">ชื่อสาขา <span class="text-red-500">*</span></label>
+                            <input type="text" name="branchName" required placeholder="ระบุชื่อสาขา" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">สถานที่จอดปัจจุบัน <span class="text-red-500">*</span></label>
+                            <input type="text" name="parkedAt" required placeholder="ระบุจุดจอดรถให้ชัดเจน" class="form-control">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: Contract & Customer -->
+            <div class="form-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-file-contract text-indigo-600"></i>
+                    <h2 class="card-title">2. ข้อมูลสัญญาและลูกค้า</h2>
+                </div>
+                <div class="card-body">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">เลขที่สัญญา <span class="text-red-500">*</span></label>
+                            <input type="text" name="contractNo" required placeholder="เลขที่สัญญาเช่าซื้อ" class="form-control font-semibold text-blue-900 bg-blue-50/50">
+                        </div>
+
+                        <!-- Dropdown สถานะ -->
+                        <div class="form-group">
+                            <label class="form-label">สถานะโยกรถ <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <select id="transferStatus" name="transferStatus" required class="form-control appearance-none cursor-pointer bg-blue-50 text-blue-800 font-medium" onchange="toggleTransferDate()">
+                                    <option value="waiting">รอโยกย้าย</option>
+                                    <option value="moved">โยกย้ายแล้ว</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-blue-600">
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group md:col-span-2">
+                            <label class="form-label">ชื่อ-นามสกุล ลูกค้า <span class="text-red-500">*</span></label>
+                            <input type="text" name="customerName" required placeholder="ระบุชื่อและนามสกุลลูกค้า" class="form-control">
+                        </div>
+
+                        <!-- วันที่โยกรถ (ซ่อนไว้ก่อน) -->
+                        <div id="transferDateGroup" class="form-group hidden fade-in">
+                            <label class="form-label">วันที่โยกรถ <span class="text-red-500">*</span></label>
+                            <input type="date" name="transferDate" id="transferDateInput" class="form-control">
+                        </div>
+
+                        <!-- เพิ่ม: โยกไปที่ (ซ่อนไว้ก่อน) -->
+                        <div id="transferToGroup" class="form-group hidden fade-in">
+                            <label class="form-label">โยกไปที่ <span class="text-red-500">*</span></label>
+                            <input type="text" name="transferTo" id="transferToInput" class="form-control" placeholder="ระบุปลายทาง/สาขาที่รับโอน">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: Vehicle Info -->
+            <div class="form-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-car text-orange-600"></i>
+                    <h2 class="card-title">3. รายละเอียดรถยนต์</h2>
+                </div>
+                <div class="card-body">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">ยี่ห้อ / รุ่น <span class="text-red-500">*</span></label>
+                            <input type="text" name="brandModel" required placeholder="เช่น Toyota Revo 2023" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ทะเบียน (รวมจังหวัด) <span class="text-red-500">*</span></label>
+                            <input type="text" name="plate" required placeholder="เช่น กก-1234 กทม." class="form-control">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: Financials -->
+            <div class="form-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-coins text-emerald-600"></i>
+                    <h2 class="card-title">4. ข้อมูลสินเชื่อ</h2>
+                </div>
+                <div class="card-body">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">ตั้งราคาขาย <span class="text-red-500">*</span></label>
+                            <input type="number" name="sellingPrice" required placeholder="0.00" class="form-control text-right">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ยอดจัด <span class="text-red-500">*</span></label>
+                            <input type="number" name="financeAmount" required placeholder="0.00" class="form-control text-right">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ARคงเหลือสุทธิ <span class="text-red-500">*</span></label>
+                            <input type="number" name="balance" required placeholder="0.00" class="form-control text-right">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 5: Photos -->
+            <div class="form-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-camera text-slate-600"></i>
+                    <h2 class="card-title">5. รูปภาพประกอบ <span class="text-sm font-normal text-slate-400 ml-2">(แนวนอนเท่านั้น)</span></h2>
+                </div>
+                <div class="card-body">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        <!-- Image 1 -->
+                        <div>
+                            <label class="form-label text-center mb-2">1. หน้าขวา 45 องศา <span class="text-red-500">*</span></label>
+                            <div class="upload-zone" id="zone1" onclick="triggerFile('file1')">
+                                <img id="preview1" class="absolute w-full h-full object-contain hidden z-10 p-2 bg-white">
+                                <div id="remove1" class="remove-btn hidden" onclick="removeImage(event, 'file1', 'preview1', 'icon1', 'remove1', 'zone1')">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </div>
+                                <div id="icon1" class="text-center">
+                                    <div class="mb-2 text-slate-400">
+                                        <i class="fa-solid fa-cloud-arrow-up text-3xl"></i>
+                                    </div>
+                                    <span class="text-xs text-slate-500 font-medium bg-white px-2 py-1 rounded border">เลือกไฟล์ภาพ</span>
+                                </div>
+                                <input type="file" id="file1" required accept="image/*" class="hidden" onchange="previewImage(this, 'preview1', 'icon1', 'remove1', 'zone1')">
+                            </div>
+                        </div>
+
+                        <!-- Image 2 -->
+                        <div>
+                            <label class="form-label text-center mb-2">2. หลังขวา 45 องศา <span class="text-red-500">*</span></label>
+                            <div class="upload-zone" id="zone2" onclick="triggerFile('file2')">
+                                <img id="preview2" class="absolute w-full h-full object-contain hidden z-10 p-2 bg-white">
+                                <div id="remove2" class="remove-btn hidden" onclick="removeImage(event, 'file2', 'preview2', 'icon2', 'remove2', 'zone2')">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </div>
+                                <div id="icon2" class="text-center">
+                                    <div class="mb-2 text-slate-400">
+                                        <i class="fa-solid fa-cloud-arrow-up text-3xl"></i>
+                                    </div>
+                                    <span class="text-xs text-slate-500 font-medium bg-white px-2 py-1 rounded border">เลือกไฟล์ภาพ</span>
+                                </div>
+                                <input type="file" id="file2" required accept="image/*" class="hidden" onchange="previewImage(this, 'preview2', 'icon2', 'remove2', 'zone2')">
+                            </div>
+                        </div>
+
+                        <!-- Image 3 -->
+                        <div>
+                            <label class="form-label text-center mb-2">3. ด้านข้างเต็มคัน <span class="text-red-500">*</span></label>
+                            <div class="upload-zone" id="zone3" onclick="triggerFile('file3')">
+                                <img id="preview3" class="absolute w-full h-full object-contain hidden z-10 p-2 bg-white">
+                                <div id="remove3" class="remove-btn hidden" onclick="removeImage(event, 'file3', 'preview3', 'icon3', 'remove3', 'zone3')">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </div>
+                                <div id="icon3" class="text-center">
+                                    <div class="mb-2 text-slate-400">
+                                        <i class="fa-solid fa-cloud-arrow-up text-3xl"></i>
+                                    </div>
+                                    <span class="text-xs text-slate-500 font-medium bg-white px-2 py-1 rounded border">เลือกไฟล์ภาพ</span>
+                                </div>
+                                <input type="file" id="file3" required accept="image/*" class="hidden" onchange="previewImage(this, 'preview3', 'icon3', 'remove3', 'zone3')">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-8 mb-12">
+                <button type="submit" id="submitBtn" class="w-full bg-blue-700 hover:bg-blue-800 text-white text-lg font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 transform active:scale-[0.99]">
+                    <i class="fa-solid fa-save"></i> บันทึกข้อมูลเข้าระบบ
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Script Handling -->
+    <script>
+        // ******************************************************
+        // URL Web App
+        // ******************************************************
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwJ2FP7sP8g0QOQrEIOpH4oi5-gVm-zdBW25VWH75WCVVAWUzLou_cDEHfWmMJL40agFA/exec"; 
+
+        const form = document.getElementById('carForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function toggleTransferDate() {
+            const status = document.getElementById('transferStatus').value;
+            
+            // Groups
+            const dateGroup = document.getElementById('transferDateGroup');
+            const toGroup = document.getElementById('transferToGroup');
+            
+            // Inputs
+            const dateInput = document.getElementById('transferDateInput');
+            const toInput = document.getElementById('transferToInput');
+
+            if (status === 'moved') {
+                dateGroup.classList.remove('hidden');
+                toGroup.classList.remove('hidden');
+                dateInput.setAttribute('required', '');
+                toInput.setAttribute('required', '');
+            } else {
+                dateGroup.classList.add('hidden');
+                toGroup.classList.add('hidden');
+                dateInput.removeAttribute('required');
+                toInput.removeAttribute('required');
+                dateInput.value = ''; 
+                toInput.value = '';
+            }
+        }
+
+        function triggerFile(inputId) {
+            document.getElementById(inputId).click();
+        }
+
+        function previewImage(input, previewId, iconId, removeId, zoneId) {
+            const preview = document.getElementById(previewId);
+            const icon = document.getElementById(iconId);
+            const removeBtn = document.getElementById(removeId);
+            const zone = document.getElementById(zoneId);
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    icon.classList.add('hidden');
+                    removeBtn.classList.remove('hidden');
+                    zone.classList.add('border-blue-500', 'bg-blue-50');
+                    // Reset onclick to prevent triggering file input when clicking the image
+                    zone.removeAttribute('onclick');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeImage(event, inputId, previewId, iconId, removeId, zoneId) {
+            event.stopPropagation(); // Stop event bubbling
+            
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            const icon = document.getElementById(iconId);
+            const removeBtn = document.getElementById(removeId);
+            const zone = document.getElementById(zoneId);
+
+            input.value = ""; // Clear file input
+            preview.src = "";
+            preview.classList.add('hidden');
+            icon.classList.remove('hidden');
+            removeBtn.classList.add('hidden');
+            zone.classList.remove('border-blue-500', 'bg-blue-50');
+            
+            // Re-add onclick
+            zone.setAttribute('onclick', `triggerFile('${inputId}')`);
+        }
+
+        const compressImage = (file) => {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const maxWidth = 1024; // ย่อเหลือกว้างสูงสุด 1024px
+                        const scaleSize = maxWidth / img.width;
+                        const width = (img.width > maxWidth) ? maxWidth : img.width;
+                        const height = (img.width > maxWidth) ? img.height * scaleSize : img.height;
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // แปลงเป็น Base64 (JPEG quality 0.7)
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        resolve(dataUrl);
+                    }
+                }
+            });
+        };
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (WEB_APP_URL === "YOUR_WEB_APP_URL_HERE" || WEB_APP_URL === "") {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'System Alert',
+                    text: 'กรุณาระบุ Web App URL ก่อนใช้งาน',
+                    confirmButtonColor: '#1d4ed8'
+                });
+                return;
+            }
+
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            try {
+                const formData = new FormData(form);
+                const data = {};
+                formData.forEach((value, key) => data[key] = value);
+
+                const file1 = document.getElementById('file1').files[0];
+                const file2 = document.getElementById('file2').files[0];
+                const file3 = document.getElementById('file3').files[0];
+
+                // ใช้ compressImage แทนการส่งไฟล์ดิบๆ
+                if(file1) { data.image1 = await compressImage(file1); data.image1Name = `1.jpg`; }
+                if(file2) { data.image2 = await compressImage(file2); data.image2Name = `2.jpg`; }
+                if(file3) { data.image3 = await compressImage(file3); data.image3Name = `3.jpg`; }
+
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                    headers: { "Content-Type": "text/plain;charset=utf-8" }
+                });
+
+                const result = await response.json();
+
+                if(result.status === 'success'){
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'บันทึกข้อมูลเรียบร้อยแล้ว',
+                        confirmButtonColor: '#1d4ed8'
+                    }).then(() => {
+                        window.location.reload(); 
+                    });
+                } else {
+                    throw new Error(result.message);
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', error.message, 'error');
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const dateInput = document.querySelector('input[name="date"]');
+            if(dateInput) dateInput.valueAsDate = new Date();
+            
+            toggleTransferDate();
+        });
+    </script>
+</body>
+</html>
