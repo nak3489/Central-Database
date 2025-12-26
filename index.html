@@ -177,7 +177,7 @@
                     <!-- Row 1 -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="form-group">
-                            <label class="form-label">วันที่ยึด <span class="text-red-500">*</span></label>
+                            <label class="form-label">วันที่ทำรายการ <span class="text-red-500">*</span></label>
                             <input type="date" name="date" required class="form-control">
                         </div>
                         <div class="form-group">
@@ -256,7 +256,7 @@
                             <input type="date" name="transferDate" id="transferDateInput" class="form-control">
                         </div>
 
-                        <!-- เพิ่ม: โยกไปที่ (ซ่อนไว้ก่อน) -->
+                        <!-- โยกไปที่ (ซ่อนไว้ก่อน) -->
                         <div id="transferToGroup" class="form-group hidden fade-in">
                             <label class="form-label">โยกไปที่ <span class="text-red-500">*</span></label>
                             <input type="text" name="transferTo" id="transferToInput" class="form-control" placeholder="ระบุปลายทาง/สาขาที่รับโอน">
@@ -277,9 +277,22 @@
                             <label class="form-label">ยี่ห้อ / รุ่น <span class="text-red-500">*</span></label>
                             <input type="text" name="brandModel" required placeholder="เช่น Toyota Revo 2023" class="form-control">
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">ทะเบียน (รวมจังหวัด) <span class="text-red-500">*</span></label>
-                            <input type="text" name="plate" required placeholder="เช่น กก-1234 กทม." class="form-control">
+                        
+                        <!-- ปรับปรุง: ลบ autoFormatPlate แต่ยังคงรูปแบบเดิม -->
+                        <div class="flex gap-4">
+                            <!-- จังหวัด (อยู่ด้านหน้า) -->
+                            <div class="w-1/2">
+                                <label class="form-label">จังหวัด <span class="text-red-500">*</span></label>
+                                <input type="text" id="plateProvince" required list="provinceList" placeholder="เลือกจังหวัด" class="form-control w-full">
+                            </div>
+                            <!-- เลขทะเบียน (ยกเลิก auto format) -->
+                            <div class="w-1/2">
+                                <label class="form-label">เลขทะเบียน <span class="text-red-500">*</span></label>
+                                <input type="text" id="plateNumber" required placeholder="กก-1234" class="form-control w-full text-center">
+                            </div>
+                            <datalist id="provinceList">
+                                <!-- จังหวัดจะถูกเติมด้วย JavaScript -->
+                            </datalist>
                         </div>
                     </div>
                 </div>
@@ -376,9 +389,12 @@
                 </div>
             </div>
 
-            <!-- Submit Button -->
-            <div class="mt-8 mb-12">
-                <button type="submit" id="submitBtn" class="w-full bg-blue-700 hover:bg-blue-800 text-white text-lg font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 transform active:scale-[0.99]">
+            <!-- Actions -->
+            <div class="mt-8 mb-12 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button type="button" onclick="resetForm()" class="bg-gray-500 hover:bg-gray-600 text-white text-lg font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 transform active:scale-[0.99]">
+                    <i class="fa-solid fa-rotate-left"></i> ล้างแบบฟอร์ม
+                </button>
+                <button type="submit" id="submitBtn" class="col-span-2 bg-blue-700 hover:bg-blue-800 text-white text-lg font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3 transform active:scale-[0.99]">
                     <i class="fa-solid fa-save"></i> บันทึกข้อมูลเข้าระบบ
                 </button>
             </div>
@@ -391,19 +407,51 @@
         // ******************************************************
         // URL Web App
         // ******************************************************
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwJ2FP7sP8g0QOQrEIOpH4oi5-gVm-zdBW25VWH75WCVVAWUzLou_cDEHfWmMJL40agFA/exec"; 
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwkKHnPgUZLI2GDs3gl_kU21abc2O40zDwkrM0RKr_n4RZxesnxXtr1gqLUTj3Np9fN4A/exec"; 
+
+        // รายชื่อจังหวัด
+        const thaiProvinces = [
+            "กรุงเทพมหานคร", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท", "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม", "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์", "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา", "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์", "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง", "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ", "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"
+        ];
 
         const form = document.getElementById('carForm');
         const submitBtn = document.getElementById('submitBtn');
 
+        function resetForm() {
+            // 1. Reset standard inputs
+            form.reset();
+
+            // 2. Reset Images
+            ['1', '2', '3'].forEach(id => {
+                const preview = document.getElementById(`preview${id}`);
+                const icon = document.getElementById(`icon${id}`);
+                const removeBtn = document.getElementById(`remove${id}`);
+                const zone = document.getElementById(`zone${id}`);
+                
+                preview.src = "";
+                preview.classList.add('hidden');
+                icon.classList.remove('hidden');
+                removeBtn.classList.add('hidden');
+                zone.classList.remove('border-blue-500', 'bg-blue-50');
+                
+                zone.setAttribute('onclick', `triggerFile('file${id}')`);
+            });
+
+            // 3. Reset Date to Today
+            const dateInput = document.querySelector('input[name="date"]');
+            if(dateInput) dateInput.valueAsDate = new Date();
+
+            // 4. Reset Toggle State
+            toggleTransferDate();
+            
+            // 5. Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
         function toggleTransferDate() {
             const status = document.getElementById('transferStatus').value;
-            
-            // Groups
             const dateGroup = document.getElementById('transferDateGroup');
             const toGroup = document.getElementById('transferToGroup');
-            
-            // Inputs
             const dateInput = document.getElementById('transferDateInput');
             const toInput = document.getElementById('transferToInput');
 
@@ -440,7 +488,6 @@
                     icon.classList.add('hidden');
                     removeBtn.classList.remove('hidden');
                     zone.classList.add('border-blue-500', 'bg-blue-50');
-                    // Reset onclick to prevent triggering file input when clicking the image
                     zone.removeAttribute('onclick');
                 }
                 reader.readAsDataURL(input.files[0]);
@@ -448,7 +495,7 @@
         }
 
         function removeImage(event, inputId, previewId, iconId, removeId, zoneId) {
-            event.stopPropagation(); // Stop event bubbling
+            event.stopPropagation(); 
             
             const input = document.getElementById(inputId);
             const preview = document.getElementById(previewId);
@@ -456,14 +503,13 @@
             const removeBtn = document.getElementById(removeId);
             const zone = document.getElementById(zoneId);
 
-            input.value = ""; // Clear file input
+            input.value = ""; 
             preview.src = "";
             preview.classList.add('hidden');
             icon.classList.remove('hidden');
             removeBtn.classList.add('hidden');
             zone.classList.remove('border-blue-500', 'bg-blue-50');
             
-            // Re-add onclick
             zone.setAttribute('onclick', `triggerFile('${inputId}')`);
         }
 
@@ -476,7 +522,7 @@
                     img.src = event.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const maxWidth = 1024; // ย่อเหลือกว้างสูงสุด 1024px
+                        const maxWidth = 1024;
                         const scaleSize = maxWidth / img.width;
                         const width = (img.width > maxWidth) ? maxWidth : img.width;
                         const height = (img.width > maxWidth) ? img.height * scaleSize : img.height;
@@ -486,7 +532,6 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        // แปลงเป็น Base64 (JPEG quality 0.7)
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                         resolve(dataUrl);
                     }
@@ -498,11 +543,37 @@
             e.preventDefault();
 
             if (WEB_APP_URL === "YOUR_WEB_APP_URL_HERE" || WEB_APP_URL === "") {
+                Swal.fire({icon: 'warning', title: 'System Alert', text: 'กรุณาระบุ Web App URL ก่อนใช้งาน', confirmButtonColor: '#1d4ed8'});
+                return;
+            }
+
+            // *** ตรวจสอบจังหวัด ***
+            const plateProvInput = document.getElementById('plateProvince');
+            const plateProvValue = plateProvInput.value;
+            if (!thaiProvinces.includes(plateProvValue)) {
                 Swal.fire({
-                    icon: 'warning',
-                    title: 'System Alert',
-                    text: 'กรุณาระบุ Web App URL ก่อนใช้งาน',
-                    confirmButtonColor: '#1d4ed8'
+                    icon: 'error',
+                    title: 'ข้อมูลจังหวัดไม่ถูกต้อง',
+                    text: 'กรุณาเลือกชื่อจังหวัดจากรายการที่กำหนดเท่านั้น',
+                    confirmButtonColor: '#d33'
+                }).then(() => {
+                    plateProvInput.focus();
+                    plateProvInput.value = '';
+                });
+                return;
+            }
+
+            // *** เพิ่มการตรวจสอบรูปแบบทะเบียน: ต้องมีเครื่องหมายขีด (-) ***
+            const plateNumInput = document.getElementById('plateNumber');
+            const plateNum = plateNumInput.value;
+            if (!plateNum.includes('-')) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'รูปแบบทะเบียนไม่ถูกต้อง',
+                    text: 'กรุณาใส่เครื่องหมายขีด (-) คั่นระหว่างหมวดอักษรและตัวเลข เช่น 1กก-1234',
+                    confirmButtonColor: '#d33'
+                }).then(() => {
+                    plateNumInput.focus();
                 });
                 return;
             }
@@ -517,11 +588,14 @@
                 const data = {};
                 formData.forEach((value, key) => data[key] = value);
 
+                // *** รวมเลขทะเบียนและจังหวัด ***
+                // หมายเหตุ: ใช้ค่า plateNum จากตัวแปรที่รับมาตรวจสอบข้างต้น
+                data.plate = `${plateNum} ${plateProvValue}`;
+
                 const file1 = document.getElementById('file1').files[0];
                 const file2 = document.getElementById('file2').files[0];
                 const file3 = document.getElementById('file3').files[0];
 
-                // ใช้ compressImage แทนการส่งไฟล์ดิบๆ
                 if(file1) { data.image1 = await compressImage(file1); data.image1Name = `1.jpg`; }
                 if(file2) { data.image2 = await compressImage(file2); data.image2Name = `2.jpg`; }
                 if(file3) { data.image3 = await compressImage(file3); data.image3Name = `3.jpg`; }
@@ -535,12 +609,7 @@
                 const result = await response.json();
 
                 if(result.status === 'success'){
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'บันทึกข้อมูลเรียบร้อยแล้ว',
-                        confirmButtonColor: '#1d4ed8'
-                    }).then(() => {
+                    Swal.fire({icon: 'success', title: 'Success', text: 'บันทึกข้อมูลเรียบร้อยแล้ว', confirmButtonColor: '#1d4ed8'}).then(() => {
                         window.location.reload(); 
                     });
                 } else {
@@ -561,8 +630,14 @@
             if(dateInput) dateInput.valueAsDate = new Date();
             
             toggleTransferDate();
+
+            const provinceList = document.getElementById('provinceList');
+            thaiProvinces.forEach(prov => {
+                const option = document.createElement('option');
+                option.value = prov;
+                provinceList.appendChild(option);
+            });
         });
     </script>
 </body>
-
 </html>
